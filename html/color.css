@@ -1,0 +1,153 @@
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: red; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
+
+li{
+    list-style: none;
+}
+
+body{
+    background-color:#ffe6cc;
+    margin: 0;
+padding: 0;
+font-family: 'Handlee', cursive;
+}
+
+#main{   
+    height:60px;
+    font-family: 'Oswald', sans-serif;
+    background-color: #663300;
+    margin: 0;
+    padding: 0;
+}
+
+.main{
+    display: inline-block;
+}
+.main_common{
+ 
+    width: 200px;
+    height: 610px;
+    background-color: white;
+    border: 5px solid #663300;
+    background-image:url('하늘.png');
+    background-repeat:no-repeat;
+    background-size:cover;  }
+.bottom{
+    height: 300px;
+    background-color: white;
+
+}
+
+#whom{
+    margin: 0;
+    padding: 0;
+    width : 200px;
+    height:80px;
+    border:2px solid #663300;
+    background-color: white
+}
+
+#chat-container{
+    width : 1800px;
+    height: 610px;
+}
+
+p.ex1 {
+    border: 1px solid yellow;
+    outline-style: solid;
+    outline-color: invert;
+}
+
+.fa:hover{
+    background-color: red;
+
+}
+
+a:link, a:visited {
+    background-color: #f44336;
+    color: white;
+    padding: 14px 25px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+
+a:hover, a:active {
+    background-color: red;
+}
+
+#chatting{
+    
+    width :1463.56px;
+    height: 550px;
+  
+    background-color : pink
+
+}
+.search-container button {
+    float: right;
+    padding: 6px 10px;
+    margin-top: 8px;
+    margin-right: 16px;
+    background: #ddd;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+  }
+ .search-container button:hover {
+    background: #ccc;
+  }
+  #box1{
+    font-family: 'Amatic SC', cursive;
+      background: blueviolet;
+      margin:5px;
+  }
+  .arrow_box {
+	position: relative;
+	background: #d5625e;
+    border: 4px solid #f5d6ba;
+    height: 50;
+	width: 50;
+}
+.arrow_box:after, .arrow_box:before {
+	left: 100%;
+	top: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.arrow_box:after {
+	border-color: rgba(213, 98, 94, 0);
+	border-left-color: #d5625e;
+	border-width: 20px;
+	margin-top: -20px;
+}
+.arrow_box:before {
+	border-color: rgba(245, 214, 186, 0);
+	border-left-color: #f5d6ba;
+	border-width: 26px;
+	margin-top: -26px;
+}

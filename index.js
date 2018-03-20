@@ -33,47 +33,30 @@ io.use((socket, next) => {
 app.use(sessionMiddleware)
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: false}))
+app.use(express.static('html'))
 
-const chat = io.of('chat')
+server.listen(3000);
+
+// 접속 종료자의 임시 대기 공간
 const waitExpires = new Set()
 
-// 웹소켓 처리
-chat.on('connection', socket => {
-  const { sessionID } = socket.request
-
-  if(waitExpires.has(sessionID)){
-    waitExpires.delete(sessionID)
-  }
-  
-  // 서버에 의해 활성화 된(접속 허가 된) 사용자의 참가
-  console.log('a user connected: ', sessionID)
-  socket.emit('connected')
-
-  // 채팅 메세지 처리
-  socket.on('chat', (message) => {
-    store.get(sessionID, (err, sess) => {
-      console.log(sessionID)                                        
-      if(sess && sess.active){
-        console.log(sess.username, sessionID, ': ', message)
-        chat.emit('chat', sess.username, message)
-      }
-    })
-  })
-
-  socket.on('disconnect', () => {
-    // 2초 기다렸다가 세션 지우고 나갔음을 broadcast 하기
-    waitExpires.add(sessionID)
-
-    setTimeout(function() {
-      store.get(sessionID, (err, sess) => {
-        if(waitExpires.has(sessionID) && sess && sess.username){
-          console.log('disconnected: ', sessionID)
-          chat.emit('left', sess.username)
-          store.destroy(sessionID)
+// 세션 스토어에서 중복 체크
+const checkOverlapName = (name) => {
+  return new Promise((resolve, reject) => {
+    store.all((err, sessions) => {
+      sessions.map(sess => {
+        if(sess.username === name){
+          console.log('overlaped')
+          reject()
         }
       })
-    }, 1000);
-  })
+      resolve()
+    })
+  });
+}
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/html/layout.html')
 })
 
 // 접속자 목록 주기
@@ -116,23 +99,43 @@ app.post('/join', (req, res) => {
     })
 })
 
-// 세션 스토어에서 중복 체크
-const checkOverlapName = (name) => {
-  return new Promise((resolve, reject) => {
-    store.all((err, sessions) => {
-      sessions.map(sess => {
-        if(sess.username === name){
-          console.log('overlaped')
-          reject()
+const chat = io.of('chat')
+// 웹소켓 처리
+chat.on('connection', socket => {
+  const { sessionID } = socket.request
+
+  // 세션 파기 대기 시간(1000ms) 전에 재접속 한 사람
+  if(waitExpires.has(sessionID)){
+    waitExpires.delete(sessionID)
+  }
+  
+  // 서버에 의해 활성화 된(접속 허가 된) 사용자의 참가
+  console.log('a user connected: ', sessionID)
+  socket.emit('connected')
+
+  // 채팅 메세지 처리
+  socket.on('chat', (message) => {
+    store.get(sessionID, (err, sess) => {
+      console.log(sessionID)                                        
+      if(sess && sess.active){
+        console.log(sess.username, sessionID, ': ', message)
+        chat.emit('chat', sess.username, message)
+      }
+    })
+  })
+
+  socket.on('disconnect', () => {
+    // 2초 기다렸다가 세션 지우고 나갔음을 broadcast 하기
+    waitExpires.add(sessionID)
+
+    setTimeout(function() {
+      store.get(sessionID, (err, sess) => {
+        if(waitExpires.has(sessionID) && sess && sess.username){
+          console.log('disconnected: ', sessionID)
+          chat.emit('left', sess.username)
+          store.destroy(sessionID)
         }
       })
-      resolve()
-    })
-  });
-}
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html')
+    }, 1000);
+  })
 })
-
-server.listen(3000);

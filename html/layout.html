@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width
+    , initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Amatic+SC" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    <title>
+    융합캡스톤 디자인
+    </title>
+    <link href="https://fonts.googleapis.com/css?family=Handlee" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="color.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script>
+    $(() => {
+      let userList = []
+      let socket = null
+      let myname = null
+
+      function joinWithName(username) {
+        $.post('/join', {username}, function({status, username, newname}) {
+          console.log(status, username, newname)
+        })
+      }
+
+      function getUserList() {
+        $.get('/users', function({users}) {
+          console.log(users)
+          userList = users
+          userList.map(username => {
+            addUserRow(username)
+          })
+        })
+      }
+
+      function startSocketio() {
+        socket = io('http://localhost:3000/chat')
+          .on('connected', function() {
+            console.log('socket connected')
+          })
+          .on('join', (username) => {
+            console.log('[join]', username)
+            addUserRow(username)
+            addInformationRow(`${username} join`)
+          })
+          .on('chat', (username, message) => {
+            console.log('[chat]', username, message)
+            addChatRow(username, message)
+          })
+          .on('left', (username) => {
+            console.log('[left]', username)
+            removeUserRow(username)
+            addInformationRow(`${username} has been left`)
+          })
+          
+          .on('change', ({username, newname}) => {
+            console.log('[change]', newname)
+            removeUserRow(username)
+            addUserRow(newname)
+            addInformationRow(`${username} -> ${newname} change`)
+          })
+      }
+
+      function sendChatMessage(message) {
+        if(message.length){
+          socket.emit('chat', message)
+        }
+      }
+
+      function addUserRow(username) {
+        $('ul#users').append(`<li id='${username}'>${username}</li>`)
+      }
+
+      function removeUserRow(username) {
+        $(`#${username}`).remove()
+      }
+
+      function addChatRow(username, message) {
+        $('div#chatlog').append(`<div>${username}: ${message}</div>`)
+        $('#chatlog').addClass('arrow_box')
+      }
+
+      function addInformationRow(message) {
+        $('div#chatlog').append(`<div>${message}</div>`)
+        $('#chatlog').addClass('arrow_box')
+      }
+
+      function setMyName(username) {
+        
+      }
+      
+      // 초기화
+      getUserList()
+      startSocketio()
+
+      $('input:submit').click(function(){
+        event.preventDefault()
+        
+        const username = $('input#name').val().trim()
+        if(username.length)
+          joinWithName(username)
+      })
+
+      $('button#btn-chat').click(function(){
+        event.preventDefault()
+
+        const message = $('input#message').val().trim()
+        sendChatMessage(message)
+        $('input#message').val("")
+      })
+
+      $('input#message').on('keydown', function(e){
+        if(e.keyCode === 13) {
+          const message = $('input#message').val().trim()
+          sendChatMessage(message)
+          $('input#message').val("")
+        }
+      })
+    })
+
+  </script>
+</head>
+<body>
+
+    <!-- 헤더 -->
+    <div id="main"> 
+        <form method="POST">
+            <input type="text" name="name" id="name" placeholder="닉네임"/>
+            <input type="submit" value="닉네임 정하기"/>
+            <label id="my-name"></label>
+          </form>
+    </div>
+
+    <!-- 메인 -->
+    <div style="display:flex;">
+        <div class="main">
+            <div  class="main_1 main_common">
+            <h4 style="text-align:center"> People in the chat room</h4><hr>
+
+            <ul id="users">
+                <li>또깽이 <i class="fa fa-heart"style="color:red;"></i></li>
+                <li>깐쵸쵸</li>
+                <li>milk팅</li>
+                <li>누굴깡</li>
+                <li>hello</li>
+            </ul>
+            <div class="search-container">
+            <form action="/action_page.php">
+                <input type="text" placeholder="Do you want to find a nickname?" name="search">
+                <button type="submit"><i class="fa fa-search"></i></button>
+              </form></div>
+            </div>
+        </div>
+        <div id="chat-container" style="text-align:center">
+            <strong><p class="ex1">An anonymous and free chat space</p></strong>
+        <div id="chatting" ><!--본격적으로 채팅하는 방-->
+            <div id="box1" style="text-align:center">
+                <h3>&#128157;The conversation partner has entered. Share your greetings.&#128157;</h3>
+                <h4>Nickname: bearry</h4>
+            </div>
+            <div id=chatlog></div>
+            <div class="arrow_box" >hello nice to meet you my name is heeyeon</div> 
+        </div>
+        <div id="input" float: "left">
+                <input style="width: 80%" type="text" id="message"/>
+                <button style="width: 20%" id="btn-chat">전송</button>
+              </div>
+        </div>
+    </div>
+    <div class="bottom">
+            
+        </div>
+
+</body></html>
