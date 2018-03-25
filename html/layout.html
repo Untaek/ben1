@@ -15,7 +15,7 @@
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="color.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script>
     $(() => {
@@ -40,7 +40,7 @@
       }
 
       function startSocketio() {
-        socket = io('http://localhost:3000/chat')
+        socket = io('/chat', {secure: true})
           .on('connected', function() {
             console.log('socket connected')
           })
@@ -58,7 +58,6 @@
             removeUserRow(username)
             addInformationRow(`${username} has been left`)
           })
-          
           .on('change', ({username, newname}) => {
             console.log('[change]', newname)
             removeUserRow(username)
@@ -99,7 +98,7 @@
       getUserList()
       startSocketio()
 
-      $('input:submit').click(function(){
+      $('input:submit').click((event) => {
         event.preventDefault()
         
         const username = $('input#name').val().trim()
@@ -107,7 +106,7 @@
           joinWithName(username)
       })
 
-      $('button#btn-chat').click(function(){
+      $('button#btn-chat').click((event) => {
         event.preventDefault()
 
         const message = $('input#message').val().trim()
@@ -115,8 +114,8 @@
         $('input#message').val("")
       })
 
-      $('input#message').on('keydown', function(e){
-        if(e.keyCode === 13) {
+      $('input#message').on('keydown', (event) => {
+        if(event.keyCode === 13) {
           const message = $('input#message').val().trim()
           sendChatMessage(message)
           $('input#message').val("")

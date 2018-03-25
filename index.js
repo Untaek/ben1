@@ -1,15 +1,22 @@
 import express from 'express'
 import http from 'http'
+import https from 'https'
 import sio from 'socket.io'
 import session from 'express-session'
 import bodyParser from 'body-parser'
+import cookieParser from 'cookie-parser'
 import redis from 'redis'
 import connRedis from 'connect-redis'
+import fs from 'fs'
 
 const app = express()
-const server = http.Server(app)
-const io = sio(server)
-
+app.set('trust proxy', 1)
+//const server = http.createServer(app)
+const secureServer = https.createServer({
+  key: fs.readFileSync('privkey.pem'),
+  cert: fs.readFileSync('cert.pem')
+}, app)
+const io = sio(secureServer)
 const RedisStore = connRedis(session)
 const redisClient = redis.createClient()
 redisClient.on('ready', () => {
@@ -22,20 +29,27 @@ const store = new RedisStore({
 
 const sessionMiddleware = session({
   store: store,
-  secret: 'vmwoewdsdscWE*37ffsd',
+  secret: 'vmwoewdsdscWEd37ffsd',
   resave: false,
   saveUninitialized: true,
+  cookie: {
+    httpOnly: true,
+    secure: true
+  }
 })
 
-io.use((socket, next) => {
-  sessionMiddleware(socket.request, socket.request.res, next)
-})
 app.use(sessionMiddleware)
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.urlencoded({extended: true}))
+app.use(cookieParser())
 app.use(express.static('html'))
 
-server.listen(3000);
+const chat = io.of('chat')
+io.of('chat').use((socket, next) => {
+  sessionMiddleware(socket.request, socket.request.res, next)
+})
+
+secureServer.listen(3000);
 
 // 접속 종료자의 임시 대기 공간
 const waitExpires = new Set()
@@ -57,10 +71,12 @@ const checkOverlapName = (name) => {
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/html/layout.html')
+  console.log('GET / ',req.sessionID)
 })
 
 // 접속자 목록 주기
 app.get('/users', (req, res) => {
+  console.log('GET /users ',req.sessionID)
   store.all((err, sessions) => {
     const users = sessions.filter(session => {
       return session.username !== undefined
@@ -74,10 +90,11 @@ app.get('/users', (req, res) => {
 
 // 채팅 참여 하기 (닉네임 중복 여부 체크)
 app.post('/join', (req, res) => {
+  console.log('POST /join ',req.sessionID)
   // join을 했는데 세션에 username이 존재하면 username 교체
   // 세션에 username이 없으면 새로 참여
   const newname = req.body.username
-  const originalname = req.session.username;
+  const originalname = req.session.username
 
   checkOverlapName(newname)
     .then(() => {
@@ -99,7 +116,7 @@ app.post('/join', (req, res) => {
     })
 })
 
-const chat = io.of('chat')
+
 // 웹소켓 처리
 chat.on('connection', socket => {
   const { sessionID } = socket.request
@@ -111,12 +128,14 @@ chat.on('connection', socket => {
   
   // 서버에 의해 활성화 된(접속 허가 된) 사용자의 참가
   console.log('a user connected: ', sessionID)
+  //console.log(socket.request)
   socket.emit('connected')
 
   // 채팅 메세지 처리
   socket.on('chat', (message) => {
     store.get(sessionID, (err, sess) => {
-      console.log(sessionID)                                        
+      console.log(sessionID)
+      //console.log(sess)
       if(sess && sess.active){
         console.log(sess.username, sessionID, ': ', message)
         chat.emit('chat', sess.username, message)
