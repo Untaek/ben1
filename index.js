@@ -11,7 +11,6 @@ import fs from 'fs'
 
 const app = express()
 app.set('trust proxy', 1)
-//const server = http.createServer(app)
 const secureServer = https.createServer({
   key: fs.readFileSync('privkey.pem'),
   cert: fs.readFileSync('cert.pem')
@@ -106,6 +105,7 @@ app.post('/join', (req, res) => {
       else{
         req.session.username = newname
         req.session.active = true
+        req.session.secret = new Set()
         chat.emit('join', newname)
     
         res.json({status: 'join', username: newname})
@@ -134,8 +134,6 @@ chat.on('connection', socket => {
   // 채팅 메세지 처리
   socket.on('chat', (message) => {
     store.get(sessionID, (err, sess) => {
-      console.log(sessionID)
-      //console.log(sess)
       if(sess && sess.active){
         console.log(sess.username, sessionID, ': ', message)
         chat.emit('chat', sess.username, message)

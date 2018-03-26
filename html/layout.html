@@ -3,19 +3,18 @@
 
 <head>
     <meta name="viewport" content="width=device-width
-    , initial-scale=1">
-    <link href="https://fonts.googleapis.com/css?family=Amatic+SC" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    , initial-scale=1">           <!--메뉴-->
     <title>
     융합캡스톤 디자인
     </title>
-    <link href="https://fonts.googleapis.com/css?family=Handlee" rel="stylesheet">
+  
     <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="color.css"/>
+    <link rel="stylesheet" type="text/css" href="chat.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script>
     $(() => {
@@ -40,7 +39,7 @@
       }
 
       function startSocketio() {
-        socket = io('/chat', {secure: true})
+        socket = io('http://localhost:3000/chat')
           .on('connected', function() {
             console.log('socket connected')
           })
@@ -58,6 +57,7 @@
             removeUserRow(username)
             addInformationRow(`${username} has been left`)
           })
+          
           .on('change', ({username, newname}) => {
             console.log('[change]', newname)
             removeUserRow(username)
@@ -98,7 +98,7 @@
       getUserList()
       startSocketio()
 
-      $('input:submit').click((event) => {
+      $('input:submit').click(function(){
         event.preventDefault()
         
         const username = $('input#name').val().trim()
@@ -106,7 +106,7 @@
           joinWithName(username)
       })
 
-      $('button#btn-chat').click((event) => {
+      $('button#btn-chat').click(function(){
         event.preventDefault()
 
         const message = $('input#message').val().trim()
@@ -114,8 +114,8 @@
         $('input#message').val("")
       })
 
-      $('input#message').on('keydown', (event) => {
-        if(event.keyCode === 13) {
+      $('input#message').on('keydown', function(e){
+        if(e.keyCode === 13) {
           const message = $('input#message').val().trim()
           sendChatMessage(message)
           $('input#message').val("")
@@ -125,55 +125,208 @@
 
   </script>
 </head>
-<body>
+<body style="height:550px">
 
-    <!-- 헤더 -->
-    <div id="main"> 
-        <form method="POST">
-            <input type="text" name="name" id="name" placeholder="닉네임"/>
-            <input type="submit" value="닉네임 정하기"/>
-            <label id="my-name"></label>
+  <!-- 헤더 -->
+  <div id="main" style="display:flex;">
+      <div style="width: 10%">
+          <div class="headcontainer" onclick="myFunction(this)" >
+              <div class="bar1"></div>
+              <div class="bar2"></div>
+              <div class="bar3"></div>
+             </div> 
+            TIP
+            <script>
+            function myFunction(x) {
+                x.classList.toggle("change");
+            }
+            </script>
+        </div> <!--메뉴판-->
+        <div style="text-align:center; width:90%" >
+            <form method="POST" style="height:100%">
+              <input type="text" name="name" id="name" placeholder="Nickname must be set first...." />
+            <input type="submit" class="button-1" value="닉네임 정하기" />
+                <label id="my-name"></label>
+              </form> <!--닉네임쓰는곳-->
+        </div>
+        </div>
+
+  <!-- 메인 -->
+       <div id="main2" style="display:flex;">
+               <div class="main" >
+                        <div id="chat-room" style="height:100%">
+                       <div style="height: 80%">
+                            <h4 style="text-align:center"> People in the chat room</h4>
+                 <hr class="line">
+
+          <ul id="users"style="height: 80%">
+              <li>
+                <label class="switch">
+                  <input type="checkbox">
+                  <span class="slider round"></span>
+                </label>    또깽이
+              </li>
+              <li>
+                  <label class="switch">
+                      <input type="checkbox">
+                      <span class="slider round"></span>
+                    </label> 재식이
+              </li>
+
+          </ul>
+      </div>
+        <div class="search-container">
+          <form action="/action_page.php">
+            <input type="text" placeholder="Do you want to find a nickname?" name="search">
+            <button type="submit">
+              <i class="fa fa-search"></i>
+            </button>
           </form>
+        </div>
+      </div>
     </div>
 
-    <!-- 메인 -->
-    <div style="display:flex;">
-        <div class="main">
-            <div  class="main_1 main_common">
-            <h4 style="text-align:center"> People in the chat room</h4><hr>
-
-            <ul id="users">
-                <li>또깽이 <i class="fa fa-heart"style="color:red;"></i></li>
-                <li>깐쵸쵸</li>
-                <li>milk팅</li>
-                <li>누굴깡</li>
-                <li>hello</li>
-            </ul>
-            <div class="search-container">
-            <form action="/action_page.php">
-                <input type="text" placeholder="Do you want to find a nickname?" name="search">
-                <button type="submit"><i class="fa fa-search"></i></button>
-              </form></div>
-            </div>
-        </div>
-        <div id="chat-container" style="text-align:center">
-            <strong><p class="ex1">An anonymous and free chat space</p></strong>
-        <div id="chatting" ><!--본격적으로 채팅하는 방-->
-            <div id="box1" style="text-align:center">
-                <h3>&#128157;The conversation partner has entered. Share your greetings.&#128157;</h3>
-                <h4>Nickname: bearry</h4>
-            </div>
-            <div id=chatlog></div>
-            <div class="arrow_box" >hello nice to meet you my name is heeyeon</div> 
-        </div>
-        <div id="input" float: "left">
-                <input style="width: 80%" type="text" id="message"/>
-                <button style="width: 20%" id="btn-chat">전송</button>
-              </div>
-        </div>
-    </div>
-    <div class="bottom">
+    <div id="chatting" >
+      <!--본격적으로 채팅하는 방-->
+      <div style="height:85%">
+          <div class="ex1">
+        <div class="container">
             
-        </div>
+      토깽이 :
+         <font color="#666"> Hello. How are you today?</font>
+          <span class="time-right">11:00</span>
+     </div>
+          <div class="container darker">
+          
+              <div style="float:right"> <font color="#666">Hey! I'm fine. Thanks for asking!</font>  : 나</div>
+              <span class="time-left">11:01</span>
+            </div>
+            <div class="container">
+                <font color="red">&bull;</font> 
+                토깽이 :
+                    secrete chatting
+                    <span class="time-right">13:00</span>
+               </div>
+               <div class="container">
+                 
+                  재식이 :
+                  <font color="#666">hello, nice to meet you</font>
+                      <span class="time-right">13:00</span>
+                 </div>
 
-</body></html>
+            <div class="container darker">
+          
+                <div style="float:right">  okay. nice~
+                   : 나 <font color="red">&bull;</font></div>
+                <span class="time-left">13:08</span>
+              </div>
+            
+              <div class="container">
+            
+                  토깽이 :
+                     <font color="#666"> Hello. How are you today?</font>
+                      <span class="time-right">11:00</span>
+                 </div>
+                      <div class="container darker">
+                      
+                          <div style="float:right"> <font color="#666">Hey! I'm fine. Thanks for asking!</font>  : 나</div>
+                          <span class="time-left">11:01</span>
+                        </div>
+                        <div class="container">
+                            <font color="red">&bull;</font> 
+                            토깽이 :
+                                secrete chatting
+                                <span class="time-right">13:00</span>
+                           </div>
+                           <div class="container">
+                             
+                              재식이 :
+                              <font color="#666">hello, nice to meet you</font>
+                                  <span class="time-right">13:00</span>
+                             </div>
+            
+                        <div class="container darker">
+                      
+                            <div style="float:right">  okay. nice~
+                               : 나 <font color="red">&bull;</font></div>
+                            <span class="time-left">13:08</span>
+                          </div>
+                          <div class="container">
+            
+                              토깽이 :
+                                 <font color="#666"> Hello. How are you today?</font>
+                                  <span class="time-right">11:00</span>
+                             </div>
+                                  <div class="container darker">
+                                  
+                                      <div style="float:right"> <font color="#666">Hey! I'm fine. Thanks for asking!</font>  : 나</div>
+                                      <span class="time-left">11:01</span>
+                                    </div>
+                                    <div class="container">
+                                        <font color="red">&bull;</font> 
+                                        토깽이 :
+                                            secrete chatting
+                                            <span class="time-right">13:00</span>
+                                       </div>
+                                       <div class="container">
+                                         
+                                          재식이 :
+                                          <font color="#666">hello, nice to meet you</font>
+                                              <span class="time-right">13:00</span>
+                                         </div>
+                        
+                                    <div class="container darker">
+                                  
+                                        <div style="float:right">  okay. nice~
+                                           : 나 <font color="red">&bull;</font></div>
+                                        <span class="time-left">13:08</span>
+                                      </div>
+                                      <div class="container">
+            
+                                          토깽이 :
+                                             <font color="#666"> Hello. How are you today?</font>
+                                              <span class="time-right">11:00</span>
+                                         </div>
+                                              <div class="container darker">
+                                              
+                                                  <div style="float:right"> <font color="#666">Hey! I'm fine. Thanks for asking!</font>  : 나</div>
+                                                  <span class="time-left">11:01</span>
+                                                </div>
+                                                <div class="container">
+                                                    <font color="red">&bull;</font> 
+                                                    토깽이 :
+                                                        secrete chatting
+                                                        <span class="time-right">13:00</span>
+                                                   </div>
+                                                   <div class="container">
+                                                     
+                                                      재식이 :
+                                                      <font color="#666">hello, nice to meet you</font>
+                                                          <span class="time-right">13:00</span>
+                                                     </div>
+                                    
+                                                <div class="container darker">
+                                              
+                                                    <div style="float:right">  okay. nice~
+                                                       : 나 <font color="red">&bull;</font></div>
+                                                    <span class="time-left">13:08</span>
+                                                  </div>
+
+
+</div>
+      <div id="input" style="display:flex">
+        <input style="width: 80%" type="text" id="message" />
+        <button style="width: 20%" id="btn-chat">전송</button>
+       </div>
+       </div>
+
+
+      
+
+     </div>
+    </div>
+   </div>
+            
+</body>
+
+</html>
