@@ -131,14 +131,55 @@ chat.on('connection', socket => {
   //console.log(socket.request)
   socket.emit('connected')
 
+  socket.on('io', () => {
+    store.get(sessionID, (err, sess) => {
+      if(sess){
+        sess.io = socket.id
+        store.set(sessionID, sess)
+      }
+      console.log(sess)
+    })
+  })
+
   // 채팅 메세지 처리
   socket.on('chat', (message) => {
+    console.log(message)
     store.get(sessionID, (err, sess) => {
       if(sess && sess.active){
-        console.log(sess.username, sessionID, ': ', message)
-        chat.emit('chat', sess.username, message)
+        const secret = new Set(sess.secret) //5man
+        const c = chat.clients()
+        store.all((err, sessions) => {
+          sessions.filter(sdata => {
+            if(!sdata.active){
+              chat.connected[sdata.io].emit('chat', sess.username, message) // meaningless
+            }
+            else {
+              return true // participants
+            }
+          }).filter(sdata => {
+            if(secret.has(sdata.username)){
+              chat.connected[sdata.io].emit('chat', sess.username, message) // plain text
+            }
+            else{
+              chat.connected[sdata.io].emit('chat', sess.username, message) // meaningless
+            }
+          })
+
+          sessions.map(sdata => {
+            console.log('123')
+            if(sdata.secret){
+              sdata.secret.forEach((user) => {
+                console.log(user)
+                chat.connected[user.io].emit('chat', sess.username, message)
+              })
+            }
+          })
+        })
       }
     })
+  })
+  socket.on('hide', (message) => {
+    
   })
 
   socket.on('disconnect', () => {
@@ -154,5 +195,41 @@ chat.on('connection', socket => {
         }
       })
     }, 1000);
+  })
+  socket.on('secret', (name)=> {
+    store.get(sessionID, (err, sess)=> {
+      if(sess.username === name){
+        console.log('overlaped')
+      } 
+      else {
+        const secret = new Set(sess.secret)
+
+        store.all((err, sessions) => {
+          sessions.map(sdata => {
+            if(sdata && sdata.username === name) {
+              secret.add({name: name, sid: sdata.id, io: sdata.io})
+              sess.secret = secret
+              store.set(sessionID, sess, err => {
+                io.to(sessionID).emit('secret', name)
+                console.log(sess)
+              })
+            }
+          })
+        })
+      }
+    })
+  })
+  socket.on('secretRemove', (name)=> {
+    store.get(sessionID, (err, sess)=> {
+      console.log(sess)
+      const secret = new Set(sess.secret)
+      secret.delete(name)
+      secret.clear()
+      sess.secret = secret
+      console.log(sess)
+      store.set(sessionID, sess, err => {
+        io.to(sessionID).emit('secretRemove', name)
+      })
+    })
   })
 })
