@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser'
 import redis from 'redis'
 import connRedis from 'connect-redis'
 import fs from 'fs'
+import _ from 'lodash'
 
 const app = express()
 app.set('trust proxy', 1)
@@ -151,27 +152,21 @@ chat.on('connection', socket => {
         store.all((err, sessions) => {
           sessions.filter(sdata => {
             if(!sdata.active){
-              chat.connected[sdata.io].emit('chat', sess.username, message) // meaningless
+              chat.connected[sdata.io].emit('cypher', sess.username, 'tomb') // meaningless
+              return false
             }
             else {
               return true // participants
             }
-          }).filter(sdata => {
-            if(secret.has(sdata.username)){
-              chat.connected[sdata.io].emit('chat', sess.username, message) // plain text
+          }).map(sdata => {
+            if(_.some(Array.from(secret), { username: sdata.username })){
+              chat.connected[sdata.io].emit('plain', sess.username, message) // plain text
+            }
+            else if(sessionID === sdata.id){
+              chat.connected[sdata.io].emit('plain', sess.username, message) // plain text
             }
             else{
-              chat.connected[sdata.io].emit('chat', sess.username, message) // meaningless
-            }
-          })
-
-          sessions.map(sdata => {
-            console.log('123')
-            if(sdata.secret){
-              sdata.secret.forEach((user) => {
-                console.log(user)
-                chat.connected[user.io].emit('chat', sess.username, message)
-              })
+              chat.connected[sdata.io].emit('cypher', sess.username, 'garbage') // meaningless
             }
           })
         })
@@ -207,7 +202,7 @@ chat.on('connection', socket => {
         store.all((err, sessions) => {
           sessions.map(sdata => {
             if(sdata && sdata.username === name) {
-              secret.add({name: name, sid: sdata.id, io: sdata.io})
+              secret.add({username: name, sid: sdata.id, io: sdata.io})
               sess.secret = secret
               store.set(sessionID, sess, err => {
                 io.to(sessionID).emit('secret', name)

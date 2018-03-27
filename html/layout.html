@@ -50,20 +50,19 @@
             addUserRow(username)
             addInformationRow(`${username} join`)
           })
-          .on('chat', (username, message) => {
-            console.log('[chat]', username, message)
+          .on('plain', (username, message) => {
+            console.log('[plain]', username, message)
             addChatRow(username, message)
           })
-          .on('hide', (secret, message) => {
-            console.log('[hide]', secret, message)
-            addChatRow(secret, message)
+          .on('cypher', (username,message) => {
+            console.log('[cypher]', message)
+            addChatRow(username, message)
           })
           .on('left', (username) => {
             console.log('[left]', username)
             removeUserRow(username)
             addInformationRow(`${username} has been left`)
           })
-
           .on('change', ({ username, newname }) => {
             console.log('[change]', newname)
             removeUserRow(username)
