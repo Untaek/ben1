@@ -5,12 +5,13 @@
     border-radius: 3px;
     padding: 1px;
     margin: 10px 0;
+    width: 40%;
 }
 
 .darker {
     border-color: #ccc;
     background-color: #ddd;
-    
+    float: right;
 }
 
 .container::after {
@@ -29,11 +30,15 @@
     color: #999;
 }
 div.ex1 {
-
-    width: 1077px;
-    height: 500px;
-    overflow: scroll;
+    width: 100%;
+    height: 95%;
+    overflow-y: scroll;
 }
+
+#input {
+    height: 5%;
+}
+
 /* width */
 ::-webkit-scrollbar {
     width: 10px;

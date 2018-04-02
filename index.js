@@ -1,5 +1,4 @@
 import express from 'express'
-import http from 'http'
 import https from 'https'
 import sio from 'socket.io'
 import session from 'express-session'
@@ -12,19 +11,22 @@ import _ from 'lodash'
 
 const app = express()
 app.set('trust proxy', 1)
-const secureServer = https.createServer({
-  key: fs.readFileSync('privkey.pem'),
-  cert: fs.readFileSync('cert.pem')
-}, app)
+const secureServer = https.createServer(
+  {
+    key: fs.readFileSync('privkey.pem'),
+    cert: fs.readFileSync('cert.pem')
+  },
+  app
+)
 const io = sio(secureServer)
 const RedisStore = connRedis(session)
 const redisClient = redis.createClient()
 redisClient.on('ready', () => {
-  console.log("redis is ready")
+  console.log('redis is ready')
   redisClient.flushall()
 })
 const store = new RedisStore({
-  client: redisClient,
+  client: redisClient
 })
 
 const sessionMiddleware = session({
@@ -40,7 +42,7 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware)
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(express.static('html'))
 
@@ -49,48 +51,50 @@ io.of('chat').use((socket, next) => {
   sessionMiddleware(socket.request, socket.request.res, next)
 })
 
-secureServer.listen(3000);
+secureServer.listen(3000)
 
 // 접속 종료자의 임시 대기 공간
 const waitExpires = new Set()
 
 // 세션 스토어에서 중복 체크
-const checkOverlapName = (name) => {
+const checkOverlapName = name => {
   return new Promise((resolve, reject) => {
     store.all((err, sessions) => {
       sessions.map(sess => {
-        if(sess.username === name){
+        if (sess.username === name) {
           console.log('overlaped')
           reject()
         }
       })
       resolve()
     })
-  });
+  })
 }
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/html/layout.html')
-  console.log('GET / ',req.sessionID)
+  console.log('GET / ', req.sessionID)
 })
 
 // 접속자 목록 주기
 app.get('/users', (req, res) => {
-  console.log('GET /users ',req.sessionID)
+  console.log('GET /users ', req.sessionID)
   store.all((err, sessions) => {
-    const users = sessions.filter(session => {
-      return session.username !== undefined
-    }).map(session => {
-      return session.username
-    })
+    const users = sessions
+      .filter(session => {
+        return session.username !== undefined
+      })
+      .map(session => {
+        return session.username
+      })
 
-    res.json({users})
+    res.json({ users })
   })
 })
 
 // 채팅 참여 하기 (닉네임 중복 여부 체크)
 app.post('/join', (req, res) => {
-  console.log('POST /join ',req.sessionID)
+  console.log('POST /join ', req.sessionID)
   // join을 했는데 세션에 username이 존재하면 username 교체
   // 세션에 username이 없으면 새로 참여
   const newname = req.body.username
@@ -98,35 +102,33 @@ app.post('/join', (req, res) => {
 
   checkOverlapName(newname)
     .then(() => {
-      if(originalname) {
+      if (originalname) {
         req.session.username = newname
-        chat.emit('change', {username: originalname, newname})
-        res.json({status: 'change', username: originalname, newname})
-      }
-      else{
+        chat.emit('change', { username: originalname, newname })
+        res.json({ status: 'change', username: originalname, newname })
+      } else {
         req.session.username = newname
         req.session.active = true
         req.session.secret = new Set()
         chat.emit('join', newname)
-    
-        res.json({status: 'join', username: newname})
+
+        res.json({ status: 'join', username: newname })
       }
     })
     .catch(() => {
-      res.json({status: 'overlap'})
+      res.json({ status: 'overlap' })
     })
 })
-
 
 // 웹소켓 처리
 chat.on('connection', socket => {
   const { sessionID } = socket.request
 
   // 세션 파기 대기 시간(1000ms) 전에 재접속 한 사람
-  if(waitExpires.has(sessionID)){
+  if (waitExpires.has(sessionID)) {
     waitExpires.delete(sessionID)
   }
-  
+
   // 서버에 의해 활성화 된(접속 허가 된) 사용자의 참가
   console.log('a user connected: ', sessionID)
   //console.log(socket.request)
@@ -134,7 +136,7 @@ chat.on('connection', socket => {
 
   socket.on('io', () => {
     store.get(sessionID, (err, sess) => {
-      if(sess){
+      if (sess) {
         sess.io = socket.id
         store.set(sessionID, sess)
       }
@@ -143,38 +145,54 @@ chat.on('connection', socket => {
   })
 
   // 채팅 메세지 처리
-  socket.on('chat', (message) => {
+  socket.on('chat', message => {
     console.log(message)
     store.get(sessionID, (err, sess) => {
-      if(sess && sess.active){
+      if (sess && sess.active) {
         const secret = new Set(sess.secret) //5man
-        const c = chat.clients()
+        const time = Date.now()
         store.all((err, sessions) => {
-          sessions.filter(sdata => {
-            if(!sdata.active){
-              chat.connected[sdata.io].emit('cypher', sess.username, 'tomb') // meaningless
-              return false
-            }
-            else {
-              return true // participants
-            }
-          }).map(sdata => {
-            if(_.some(Array.from(secret), { username: sdata.username })){
-              chat.connected[sdata.io].emit('plain', sess.username, message) // plain text
-            }
-            else if(sessionID === sdata.id){
-              chat.connected[sdata.io].emit('plain', sess.username, message) // plain text
-            }
-            else{
-              chat.connected[sdata.io].emit('cypher', sess.username, 'garbage') // meaningless
-            }
-          })
+          sessions
+            .filter(sdata => {
+              if (!sdata.active) {
+                chat.connected[sdata.io].emit(
+                  'cypher',
+                  sess.username,
+                  'tomb',
+                  time
+                ) // meaningless
+                return false
+              } else {
+                return true // participants
+              }
+            })
+            .map(sdata => {
+              if (_.some(Array.from(secret), { username: sdata.username })) {
+                chat.connected[sdata.io].emit(
+                  'plain',
+                  sess.username,
+                  message,
+                  time
+                ) // plain text
+              } else if (sessionID === sdata.id) {
+                chat.connected[sdata.io].emit(
+                  'plain',
+                  sess.username,
+                  message,
+                  time
+                ) // plain text
+              } else {
+                chat.connected[sdata.io].emit(
+                  'cypher',
+                  sess.username,
+                  'garbage',
+                  time
+                ) // meaningless
+              }
+            })
         })
       }
     })
-  })
-  socket.on('hide', (message) => {
-    
   })
 
   socket.on('disconnect', () => {
@@ -183,26 +201,25 @@ chat.on('connection', socket => {
 
     setTimeout(function() {
       store.get(sessionID, (err, sess) => {
-        if(waitExpires.has(sessionID) && sess && sess.username){
+        if (waitExpires.has(sessionID) && sess && sess.username) {
           console.log('disconnected: ', sessionID)
           chat.emit('left', sess.username)
           store.destroy(sessionID)
         }
       })
-    }, 1000);
+    }, 1000)
   })
-  socket.on('secret', (name)=> {
-    store.get(sessionID, (err, sess)=> {
-      if(sess.username === name){
+  socket.on('secret', name => {
+    store.get(sessionID, (err, sess) => {
+      if (sess.username === name) {
         console.log('overlaped')
-      } 
-      else {
+      } else {
         const secret = new Set(sess.secret)
 
         store.all((err, sessions) => {
           sessions.map(sdata => {
-            if(sdata && sdata.username === name) {
-              secret.add({username: name, sid: sdata.id, io: sdata.io})
+            if (sdata && sdata.username === name) {
+              secret.add({ username: name, sid: sdata.id, io: sdata.io })
               sess.secret = secret
               store.set(sessionID, sess, err => {
                 io.to(sessionID).emit('secret', name)
@@ -214,8 +231,8 @@ chat.on('connection', socket => {
       }
     })
   })
-  socket.on('secretRemove', (name)=> {
-    store.get(sessionID, (err, sess)=> {
+  socket.on('secretRemove', name => {
+    store.get(sessionID, (err, sess) => {
       console.log(sess)
       const secret = new Set(sess.secret)
       secret.delete(name)

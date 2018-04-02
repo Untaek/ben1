@@ -29,8 +29,7 @@ li{
 body{
     background-color:#ffe6cc;
     margin: 2;
-padding: 3;
-
+    padding: 3;
 }
 
 #main{   
@@ -39,6 +38,10 @@ padding: 3;
     background-color: white;
     margin: 3px;
     padding: 4px;
+}
+
+#main2 {
+    height: 100%;
 }
 
 
@@ -63,8 +66,7 @@ padding: 3;
 }
 
 #chat-container{
-    width : 70%;
-    height: 80%;
+
 }
 
 p.ex1 {
@@ -89,9 +91,8 @@ a:hover, a:active {
 }
 
 #chatting{
-    
-    width :110%;
-    height: 550px;
+    width :100%;
+    height: 720px;
     padding : 5px;
     background-color : pink
 

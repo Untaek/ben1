@@ -26,6 +26,7 @@
       function joinWithName(username) {
         $.post('/join', { username }, function ({ status, username, newname }) {
           console.log(status, username, newname)
+          myname = newname
           socket.emit('io')
         })
       }
@@ -50,13 +51,13 @@
             addUserRow(username)
             addInformationRow(`${username} join`)
           })
-          .on('plain', (username, message) => {
-            console.log('[plain]', username, message)
-            addChatRow(username, message)
+          .on('plain', (username, message, time) => {
+            console.log('[plain]', username, message, time)
+            addChatRow(username, message, time)
           })
-          .on('cypher', (username,message) => {
-            console.log('[cypher]', message)
-            addChatRow(username, message)
+          .on('cypher', (username, message, time) => {
+            console.log('[cypher]', username, message, time)
+            addChatRow(username, message, time)
           })
           .on('left', (username) => {
             console.log('[left]', username)
@@ -103,19 +104,42 @@
         $(`#${username}`).remove()
       }
 
-      function addChatRow(username, message) {
-        $('div.ex1').append(`<div>${username}: ${message}</div>`)
+      function addChatRow(username, message, time) {
+        const date = new Date(time)
+        const darker = username === myname ? 'darker' : ''
+        $('div.ex1').append(`
+        <div class="container ${darker}">
+            ${username} :
+            <font color="#666">${message}</font>
+            <span class="time-right">${date.toTimeString().split(' ')[0]}</span>
+            </div>
+          <div style="clear:both">
+        </div>
+        `)
         $('div.ex1').addClass('arrow_box')
+        scrollToBottom()
       }
 
       function addInformationRow(message) {
-        $('div.ex1').append(`<div>${message}</div>`)
+        $('div.ex1').append(`
+        <div class="container">
+            [information] :
+            <font color="#666">${message}</font>
+            
+            </div>
+          <div style="clear:both">
+        </div>
+        `)
         $('div.ex1').addClass('arrow_box')
+        scrollToBottom()
       }
 
-      function setMyName(username) {
-
+      function scrollToBottom(){
+        //var objDiv = document.getElementsByClassName('ex1')
+        //objDiv.scrollTop = objDiv.scrollHeight;
+        $('.ex1').scrollTop($('.ex1')[0].scrollHeight)
       }
+
       function private(username) {
         socket.emit('secret', username)
       }
@@ -201,21 +225,7 @@
           <h4 style="text-align:center"> People in the chat room</h4>
           <hr class="line">
 
-          <ul id="users" style="height: 80%">
-            <li>
-              <label class="switch">
-                <input class="switch-secret" id="secret" type="checkbox"/>
-                <span class="slider round"></span>
-              </label> 또깽이
-            </li>
-            <li>
-              <label id="list" class="switch">
-                <input class="switch-secret" id="secret" type="checkbox"/>
-                <span class="slider round"></span>
-              </label> 재식이
-            </li>
-            
-          </ul>
+          <ul id="users"></ul>
         </div>
         <div class="search-container">
           <form action="/action_page.php">
@@ -230,149 +240,14 @@
 
     <div id="chatting">
       <!--본격적으로 채팅하는 방-->
-      <div style="height:85%">
-        <div class="ex1">
-          <div class="container">
-
-            토깽이 :
-            <font color="#666"> Hello. How are you today?</font>
-            <span class="time-right">11:00</span>
-          </div>
-          <div class="container darker">
-
-            <div style="float:right">
-              <font color="#666">Hey! I'm fine. Thanks for asking!</font> : 나</div>
-            <span class="time-left">11:01</span>
-          </div>
-          <div class="container">
-            <font color="red">&bull;</font>
-            토깽이 : secrete chatting
-            <span class="time-right">13:00</span>
-          </div>
-          <div class="container">
-
-            재식이 :
-            <font color="#666">hello, nice to meet you</font>
-            <span class="time-right">13:00</span>
-          </div>
-
-          <div class="container darker">
-
-            <div style="float:right"> okay. nice~ : 나
-              <font color="red">&bull;</font>
-            </div>
-            <span class="time-left">13:08</span>
-          </div>
-
-          <div class="container">
-
-            토깽이 :
-            <font color="#666"> Hello. How are you today?</font>
-            <span class="time-right">11:00</span>
-          </div>
-          <div class="container darker">
-
-            <div style="float:right">
-              <font color="#666">Hey! I'm fine. Thanks for asking!</font> : 나</div>
-            <span class="time-left">11:01</span>
-          </div>
-          <div class="container">
-            <font color="red">&bull;</font>
-            토깽이 : secrete chatting
-            <span class="time-right">13:00</span>
-          </div>
-          <div class="container">
-
-            재식이 :
-            <font color="#666">hello, nice to meet you</font>
-            <span class="time-right">13:00</span>
-          </div>
-
-          <div class="container darker">
-
-            <div style="float:right"> okay. nice~ : 나
-              <font color="red">&bull;</font>
-            </div>
-            <span class="time-left">13:08</span>
-          </div>
-          <div class="container">
-
-            토깽이 :
-            <font color="#666"> Hello. How are you today?</font>
-            <span class="time-right">11:00</span>
-          </div>
-          <div class="container darker">
-
-            <div style="float:right">
-              <font color="#666">Hey! I'm fine. Thanks for asking!</font> : 나</div>
-            <span class="time-left">11:01</span>
-          </div>
-          <div class="container">
-            <font color="red">&bull;</font>
-            토깽이 : secrete chatting
-            <span class="time-right">13:00</span>
-          </div>
-          <div class="container">
-
-            재식이 :
-            <font color="#666">hello, nice to meet you</font>
-            <span class="time-right">13:00</span>
-          </div>
-
-          <div class="container darker">
-
-            <div style="float:right"> okay. nice~ : 나
-              <font color="red">&bull;</font>
-            </div>
-            <span class="time-left">13:08</span>
-          </div>
-          <div class="container">
-
-            토깽이 :
-            <font color="#666"> Hello. How are you today?</font>
-            <span class="time-right">11:00</span>
-          </div>
-          <div class="container darker">
-
-            <div style="float:right">
-              <font color="#666">Hey! I'm fine. Thanks for asking!</font> : 나</div>
-            <span class="time-left">11:01</span>
-          </div>
-          <div class="container">
-            <font color="red">&bull;</font>
-            토깽이 : secrete chatting
-            <span class="time-right">13:00</span>
-          </div>
-          <div class="container">
-
-            재식이 :
-            <font color="#666">hello, nice to meet you</font>
-            <span class="time-right">13:00</span>
-          </div>
-
-          <div class="container darker">
-
-            <div style="float:right"> okay. nice~ : 나
-              <font color="red">&bull;</font>
-            </div>
-            <span class="time-left">13:08</span>
-          </div>
-
-
-        </div>
+        <div class="ex1"></div>
         <div id="input" style="display:flex">
           <input style="width: 80%" type="text" id="message" />
           <button style="width: 20%" id="btn-chat">전송</button>
         </div>
-      </div>
-
-
-
-
     </div>
   </div>
   </div>
-
 </body>
 
 </html>
