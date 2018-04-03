@@ -6,6 +6,9 @@ Need a running redis instance. because this project implement session store usin
 git clone https://github.com/Untaek/ben1
 cd ben1
 npm start (yarn start)
-// and open it in any browser
-// https://localhost:3000/
+/* and open it in any browser: https://localhost:3000/ */
 ```
+
+## Some bugs
+ - Safari browser might be unable to test. Safari does not allow to connect by using self-sign authentication.
+ - If someone leave chatting room, secret connection(for sending plain text) is broken. 
