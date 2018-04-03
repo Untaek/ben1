@@ -149,7 +149,7 @@ chat.on('connection', socket => {
     console.log(message)
     store.get(sessionID, (err, sess) => {
       if (sess && sess.active) {
-        const secret = new Set(sess.secret) //5man
+        const secret = new Set(sess.secret)
         const time = Date.now()
         store.all((err, sessions) => {
           sessions
@@ -160,8 +160,8 @@ chat.on('connection', socket => {
                   sess.username,
                   'tomb',
                   time
-                ) // meaningless
-                return false
+                )
+                return false // meaningless
               } else {
                 return true // participants
               }
